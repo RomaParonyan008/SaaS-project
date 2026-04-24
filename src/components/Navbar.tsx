@@ -1,9 +1,10 @@
-'use client';
-
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/utils';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../store';
+import { setIsScrolled, toggleMobileMenu, closeMobileMenu } from '../store/slices/uiSlice';
 
 const navLinks = [
   { name: 'Features', href: '#features' },
@@ -13,14 +14,17 @@ const navLinks = [
 ];
 
 export default function Navbar() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
+  const dispatch = useDispatch();
+  const { isMobileMenuOpen, isScrolled } = useSelector((state: RootState) => state.ui);
 
-  if (typeof window !== 'undefined') {
-    window.addEventListener('scroll', () => {
-      setIsScrolled(window.scrollY > 20);
-    });
-  }
+  useEffect(() => {
+    const handleScroll = () => {
+      dispatch(setIsScrolled(window.scrollY > 20));
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [dispatch]);
 
   return (
     <nav
@@ -61,15 +65,15 @@ export default function Navbar() {
 
           <button
             className="md:hidden p-2 text-gray-600"
-            onClick={() => setIsOpen(!isOpen)}
+            onClick={() => dispatch(toggleMobileMenu())}
           >
-            {isOpen ? <X size={24} /> : <Menu size={24} />}
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
       </div>
 
       <AnimatePresence>
-        {isOpen && (
+        {isMobileMenuOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
@@ -82,7 +86,7 @@ export default function Navbar() {
                   key={link.name}
                   href={link.href}
                   className="block text-gray-600 hover:text-purple-600 transition-colors py-2"
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => dispatch(closeMobileMenu())}
                 >
                   {link.name}
                 </a>
